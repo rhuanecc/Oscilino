@@ -1,6 +1,7 @@
 package com.rhuanecc.oscilino;
 
 import android.bluetooth.BluetoothSocket;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -18,6 +19,9 @@ import com.jjoe64.graphview.series.Series;
 import com.rhuanecc.oscilino.BT.BtReceiverThread;
 
 public class GraphActivity extends AppCompatActivity {
+    private final int POINTS_COUNT = 1000;
+
+
     GraphView graph;
     LineGraphSeries<DataPoint> ch1;
     LineGraphSeries<DataPoint> ch2;
@@ -36,12 +40,12 @@ public class GraphActivity extends AppCompatActivity {
         graph.setKeepScreenOn(true);
         graph.getViewport().setXAxisBoundsManual(true);
         graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(200);
+        graph.getViewport().setMaxX(POINTS_COUNT);
 
         //Dados para grafico
         ch1 = new LineGraphSeries<>();
         ch2 = new LineGraphSeries<>();
-        //ch1.setColor(Color.YELLOW);
+        ch2.setColor(Color.RED);
         graph.addSeries(ch1);    //Add dados no grafico
         graph.addSeries(ch2);    //Add dados no grafico
 
@@ -67,9 +71,9 @@ public class GraphActivity extends AppCompatActivity {
             Ponto p = (Ponto)msg.obj;
             //Log.e("uiHandler", "Recebeu msg: "+p);
             if(p.canal == 1){
-                ch1.appendData(new DataPoint(p.tempo, p.valor), true, 200);
+                ch1.appendData(new DataPoint(p.tempo, p.valor), true, POINTS_COUNT);
             } else if(p.canal == 2){
-                ch2.appendData(new DataPoint(p.tempo, p.valor), true, 200);
+                ch2.appendData(new DataPoint(p.tempo, p.valor), true, POINTS_COUNT);
             }
         }
     };

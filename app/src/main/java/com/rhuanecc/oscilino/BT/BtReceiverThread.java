@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.rhuanecc.oscilino.ParserThread;
+import com.rhuanecc.oscilino.ParserThread2;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,7 +44,7 @@ public class BtReceiverThread extends Thread {
 
         fila = new LinkedBlockingQueue(); //fila de comunicação entre receiver e parser
 
-        new ParserThread(fila, uiHandler).start();   //inicia thread parser
+        new ParserThread2(fila, uiHandler).start();   //inicia thread parser
     }
 
     //Thread para recepção dos dados
