@@ -25,6 +25,14 @@ public class Buffer {
         this.ch = ch;
     }
 
+    public Byte getCh() {
+        return ch;
+    }
+
+    public ArrayList<Float> getPontos() {
+        return pontos;
+    }
+
     public boolean isValid(){
         if(ch == null || cks == null) //se nao recebeu desde o começo
             return false;
@@ -33,7 +41,7 @@ public class Buffer {
         for(Float p : pontos)
             soma+=p;
 
-        if(soma == cks) //se checksum bater
+        if(soma == cks.longValue()) //se checksum bater
             return true;
         else
             return false;
@@ -43,22 +51,30 @@ public class Buffer {
         pontos.add(value);
     }
 
+    public void setScale(float step){
+        for(Float p : pontos)
+            p = p*step;
+    }
+
     @Override
     public String toString() {
-        String s = "";
+        String s = "[";
+
         if(ch!= null)
-            s.concat(ch.toString()+";");
+            s = s.concat(ch.toString()+";");
         else
-            s.concat("ch=null;");
+            s = s.concat("ch=null;");
 
         for(Float p : pontos){
-            s.concat(p.toString()+",");
+            s = s.concat(p.toString()+",");
         }
 
         if(cks != null)
-            s.concat(cks.toString()+";");
+            s = s.concat(cks.toString()+";");
         else
-            s.concat("cks=null;");
+            s = s.concat("cks=null;");
+
+        s = s.concat("]");
 
         return s;
     }

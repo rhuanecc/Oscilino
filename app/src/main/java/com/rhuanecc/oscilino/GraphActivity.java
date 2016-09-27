@@ -1,6 +1,5 @@
 package com.rhuanecc.oscilino;
 
-import android.bluetooth.BluetoothSocket;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -18,14 +17,20 @@ import com.jjoe64.graphview.series.OnDataPointTapListener;
 import com.jjoe64.graphview.series.Series;
 import com.rhuanecc.oscilino.BT.BtReceiverThread;
 
+import java.util.ArrayList;
+
 public class GraphActivity extends AppCompatActivity {
-    private final int POINTS_COUNT = 1000;
+    public static final int POINTS_COUNT = 1000;
+    public static final int SET_CH0_DATA = 0;
+    public static final int SET_CH1_DATA = 1;
 
 
     GraphView graph;
+    LineGraphSeries<DataPoint> ch0;
     LineGraphSeries<DataPoint> ch1;
-    LineGraphSeries<DataPoint> ch2;
     BtReceiverThread receiver;
+
+    DataPoint[] graphData;
 
 
     @Override
@@ -34,24 +39,19 @@ public class GraphActivity extends AppCompatActivity {
         setContentView(R.layout.activity_graph);
 
         graph = (GraphView) findViewById(R.id.graph);
-        graph.setTitle("Voltage x Time");
-        //graph.setBackgroundColor(Color.DKGRAY);
-        graph.setHorizontalScrollBarEnabled(true);
+        graph.setTitle("Voltage x Time (ms)");
+        //graph.setHorizontalScrollBarEnabled(true);
         graph.setKeepScreenOn(true);
-        graph.getViewport().setXAxisBoundsManual(true);
-        graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(POINTS_COUNT);
 
         //Dados para grafico
+        ch0 = new LineGraphSeries<>();
         ch1 = new LineGraphSeries<>();
-        ch2 = new LineGraphSeries<>();
-        ch2.setColor(Color.RED);
+        ch1.setColor(Color.RED);
+        graph.addSeries(ch0);    //Add dados no grafico
         graph.addSeries(ch1);    //Add dados no grafico
-        graph.addSeries(ch2);    //Add dados no grafico
-
 
         //Mostra info do ponto clicado
-        ch1.setOnDataPointTapListener(new OnDataPointTapListener() {
+        ch0.setOnDataPointTapListener(new OnDataPointTapListener() {
             @Override
             public void onTap(Series series, DataPointInterface dataPoint) {
                 Toast.makeText(GraphActivity.this, dataPoint.toString(), Toast.LENGTH_SHORT).show();
@@ -61,19 +61,20 @@ public class GraphActivity extends AppCompatActivity {
         //Inicia nova thread para receber os dados
         receiver = new BtReceiverThread(uiHandler);
         receiver.start();
-    }
 
+        graphData = new DataPoint[POINTS_COUNT];
+
+        Toast.makeText(GraphActivity.this, "Sincronizando...", Toast.LENGTH_SHORT).show();
+    }
 
     Handler uiHandler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
+            if(msg.arg1 == SET_CH0_DATA){                          //canal 0
+                ch0.resetData((DataPoint[])msg.obj);        //recebe 1000 pontos mais recentes
 
-            Ponto p = (Ponto)msg.obj;
-            //Log.e("uiHandler", "Recebeu msg: "+p);
-            if(p.canal == 1){
-                ch1.appendData(new DataPoint(p.tempo, p.valor), true, POINTS_COUNT);
-            } else if(p.canal == 2){
-                ch2.appendData(new DataPoint(p.tempo, p.valor), true, POINTS_COUNT);
+            } else if(msg.arg1 == SET_CH1_DATA) {                   //canal 1
+                ch1.resetData((DataPoint[]) msg.obj);        //recebe 1000 pontos mais recentes
             }
         }
     };

@@ -2,18 +2,29 @@ package com.rhuanecc.oscilino;
 
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 
+import com.jjoe64.graphview.series.DataPoint;
+
+import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by rhuan on 2016-09-05.
  */
 public class ParserThread extends Thread {
+    private final float TIME_SCALE = (float) 0.120;          //120us a cada ponto -> 0.12ms
+    private final float VOLTAGE_SCALE = (float) 0.00488;     //4.88mV
+    private final int SCREEN_REFRESH_INTERVAL = 80;          //intervalo entre cada atualização da tela (ms)
+
     LinkedBlockingQueue<Byte> fila;
+    Buffer buffer;
+    ArrayList<Float> graphBuffer;
+    DataPoint[] graphData;
     Handler uiHandler;
-    String pontoStr;
     byte temp;
+    boolean parse = true;
 
     public ParserThread(LinkedBlockingQueue<Byte> fila, Handler uiHandler) {
         this.setName("ParserThread");
@@ -23,38 +34,117 @@ public class ParserThread extends Thread {
 
     @Override
     public void run() {
-        //Lê fila separando cada ponto
-        pontoStr = new String();
-        while(true) {
-            try {
-                temp = fila.take();
+        buffer = new Buffer();
+        graphBuffer = new ArrayList<>(); //thread safe list
+        int tempInt;
+        long tempLong;
 
-                if(temp == (byte)';'){        //se caracter ; -> delimitaçao do ponto
-                    //Log.e("PARSER", Thread.currentThread().getName() +": "+ pontoStr);       //imprime ponto resultante
-                    processaPonto(pontoStr);
-                    pontoStr = new String();        //limpa string para proximo ponto
-                }else {                        //se qualquer outro caracter
-                    pontoStr = pontoStr.concat(String.valueOf((char)temp));  //concatena caracter no ponto
+        while(fila.peek() == null); //aguarda chegar algo na fila
+        try {
+            Thread.sleep(10);      //espera chegar mais dados na fila
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        while(fila.peek() != null && fila.peek() != (byte)';') {  //consome fila até o inicio da proxima serie completa
+           fila.remove();
+        }
+
+        //deve ocorrer a cada SCREEN_REFRESH_INTERVAL ms
+        Timer t = new Timer("TimerThread");
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                graphBuffer = GraphBuffer.getInstance();
+                if(graphBuffer.size() == GraphActivity.POINTS_COUNT) {  //só atualiza gui quando tiver os primeiros 1000 pontos
+                    //converte para DataPoint[] calculando escala de tensão e tempo
+                    int i = 0;
+                    graphData = new DataPoint[GraphActivity.POINTS_COUNT];
+
+                    for (Float p : graphBuffer) {
+                        graphData[i] = new DataPoint(i * TIME_SCALE, p * VOLTAGE_SCALE);
+                        i++;
+                    }
+
+                    //envia ponto para grafico (atualiza GUI)
+                    Message m = new Message();
+                    m.arg1 = GraphActivity.SET_CH0_DATA;     //substitui dados do canal 0
+                    m.obj = graphData;                       //pontos
+                    uiHandler.sendMessage(m);
                 }
-            } catch (InterruptedException e) {
-
             }
+        };
+        t.scheduleAtFixedRate(task, SCREEN_REFRESH_INTERVAL, SCREEN_REFRESH_INTERVAL);
+
+
+        //Lê fila separando cada conjunto de pontos
+        while(parse){
+            try {
+                temp = fila.take(); //bloqueante até que haja algo na fila
+
+                if(temp == (byte)';'){      //fim do buffer
+                    processaBuffer();     //checa integridade, envia para gui
+                    buffer = new Buffer();      //inicia novo buffer (novo conjunto de pontos chegará)
+
+                    //inicio do proximo conjunto
+                    buffer.setCh(fila.take());  //identifica canal sendo recebido
+
+                }else if(temp == (byte)','){    //se virgula, recebe proximos 4 bytes como cks, converte para long
+                    tempLong = ((fila.take()&0xFF) << 24);     //recebe byte mais significativos
+                    tempLong += ((fila.take()&0xFF) << 16);    //2nd byte
+                    tempLong += ((fila.take()&0xFF) << 8);     //3rd byte
+                    tempLong += (fila.take()&0xFF);            //4th byte
+                    buffer.setCks(tempLong);            //cks enviado ao buffer
+
+                }else{                        //une 2 bytes em um int
+                    tempInt = ((temp&0xFF) << 8);      //recebe 8 bits mais significativos
+                    tempInt += (fila.take()&0xFF);     //soma aos 8 bits menos significativos
+                    buffer.add((float)tempInt);     //converte para escala do ADC e add no buffer
+                }
+            } catch (InterruptedException e) {}
         }
     }
 
-    private void processaPonto(String ponto){
-        String[] values = ponto.split(",");
-        if(values.length == 3){
-            int canal = Integer.parseInt(values[0]);
-            int tempo = Integer.parseInt(values[1]);
-            float valor = Float.parseFloat(values[2]);
+    //Verifica checksum, se ok envia pontos para gui
+    private void processaBuffer(){
+        if(buffer.isValid()){
+            addPontosGraphBuffer();
+            //TimerTask irá enviar graphBuffer para GUI a cada SCREEN_REFRESH_INTERVAL
 
-            Ponto p = new Ponto(canal, tempo, valor);
+        }
+    }
+
+    /**Adiciona pontos do buffer de recebimento ao buffer do grafico limitando em POINTS_COUNT mais recentes*/
+    private void addPontosGraphBuffer(){
+        for(Float p : buffer.getPontos()) {
+            GraphBuffer.add(p);
+        }
+    }
+
+    /** Envia buffer completo recebido. Deve receber protocolo com POINTS_COUNT pontos do Arduino.*/
+    private void enviaBufferCompleto(){
+        int i = 0;
+        int tempo = 0;
+        graphData = new DataPoint[GraphActivity.POINTS_COUNT];
+
+        if(buffer.getPontos().size() > 0) {
+            for (Float p : buffer.getPontos()) {
+                if (p != null) {
+                    graphData[i] = new DataPoint(tempo * TIME_SCALE, p * VOLTAGE_SCALE);
+                    i++;
+                }
+                tempo++;    //se valor null compensa ponto não recebido "esticando" grafico
+            }
 
             //envia ponto para grafico (atualiza GUI)
             Message m = new Message();
-            m.obj = p;
+            m.arg1 = GraphActivity.SET_CH0_DATA;     //substitui dados do canal 0
+            m.obj = graphData;                       //pontos
             uiHandler.sendMessage(m);
         }
+    }
+
+    public void close(){
+        parse = false;
+
     }
 }

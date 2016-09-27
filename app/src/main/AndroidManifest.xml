@@ -22,7 +22,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".GraphActivity" android:screenOrientation="sensorLandscape"/>
+        <activity android:name=".GraphActivity" android:screenOrientation="reverseLandscape"/>
         <activity android:name=".BT.DevicesList" android:label="Dispositivos Pareados" android:theme="@android:style/Theme.Dialog"/>
     </application>
 

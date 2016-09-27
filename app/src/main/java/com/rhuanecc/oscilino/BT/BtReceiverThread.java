@@ -5,7 +5,6 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.rhuanecc.oscilino.ParserThread;
-import com.rhuanecc.oscilino.ParserThread2;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +19,7 @@ public class BtReceiverThread extends Thread {
     private final InputStream in;
     private final OutputStream out;
     private Handler uiHandler;
+    private ParserThread parser;
     private boolean receive = true;
 
     public LinkedBlockingQueue<Byte> fila;
@@ -44,7 +44,8 @@ public class BtReceiverThread extends Thread {
 
         fila = new LinkedBlockingQueue(); //fila de comunicação entre receiver e parser
 
-        new ParserThread2(fila, uiHandler).start();   //inicia thread parser
+        parser = new ParserThread(fila, uiHandler);   //inicia thread parser
+        parser.start();
     }
 
     //Thread para recepção dos dados
@@ -61,11 +62,8 @@ public class BtReceiverThread extends Thread {
 
             } catch (IOException e) {
                 Log.e("BT", "Erro in.read");
-                try {
-                    socket.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
+                this.close();
+
             }
         }
     }
@@ -82,6 +80,7 @@ public class BtReceiverThread extends Thread {
         try {
             receive = false;
             socket.close();
+            parser.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
