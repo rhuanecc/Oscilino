@@ -7,7 +7,12 @@ import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.CompoundButton;
+import android.widget.Spinner;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
@@ -20,17 +25,27 @@ import com.rhuanecc.oscilino.BT.BtReceiverThread;
 import java.util.ArrayList;
 
 public class GraphActivity extends AppCompatActivity {
-    public static final int POINTS_COUNT = 1000;
     public static final int SET_CH0_DATA = 0;
     public static final int SET_CH1_DATA = 1;
+    public static final int POINTS_COUNT = 700;
+    public static final float TIME_SCALE = (float) 0.120;          //120us a cada ponto -> 0.12ms
+    public static final float VOLTAGE_SCALE = (float) 0.00488;     //4.88mV
+    public static final int SCREEN_REFRESH_INTERVAL = 100;         //intervalo entre cada atualização da tela (ms)
 
+    public static boolean paused = false;
+    public static float takeSampleEvery = 1;            //quantidade de amostras a serem ignoradas para aumentar escala de tempo
+    public static float voltageScale = VOLTAGE_SCALE;   //escala de tensão utilizada no circuito de condicionamento
+
+    ToggleButton pauseButton;
+    Spinner timeSpinner;
+    Spinner voltageSpinner;
 
     GraphView graph;
     LineGraphSeries<DataPoint> ch0;
     LineGraphSeries<DataPoint> ch1;
     BtReceiverThread receiver;
 
-    DataPoint[] graphData;
+    //DataPoint[] graphData;
 
 
     @Override
@@ -38,6 +53,23 @@ public class GraphActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_graph);
 
+        //======================================== Controles ========================================
+        pauseButton = (ToggleButton) findViewById(R.id.pauseButton);
+        pauseButton.setOnCheckedChangeListener(pauseListener);
+
+        timeSpinner = (Spinner) findViewById(R.id.timeSpinner);
+        ArrayAdapter<CharSequence> timeAdapter = ArrayAdapter.createFromResource(this, R.array.time_array, android.R.layout.simple_spinner_dropdown_item);
+        timeSpinner.setAdapter(timeAdapter);
+        timeSpinner.setOnItemSelectedListener(timeSpinnerListener);
+        timeSpinner.setSelection(1);        //20ms
+
+        voltageSpinner = (Spinner) findViewById(R.id.voltageSpinner);
+        ArrayAdapter<CharSequence> voltageAdapter = ArrayAdapter.createFromResource(this, R.array.voltage_array, android.R.layout.simple_spinner_dropdown_item);
+        voltageSpinner.setAdapter(voltageAdapter);
+        voltageSpinner.setOnItemSelectedListener(voltageSpinnerListener);
+        voltageSpinner.setSelection(1);     //5v
+
+        //========================================= Grafico =========================================
         graph = (GraphView) findViewById(R.id.graph);
         graph.setTitle("Voltage x Time (ms)");
         //graph.setHorizontalScrollBarEnabled(true);
@@ -54,7 +86,10 @@ public class GraphActivity extends AppCompatActivity {
         ch0.setOnDataPointTapListener(new OnDataPointTapListener() {
             @Override
             public void onTap(Series series, DataPointInterface dataPoint) {
-                Toast.makeText(GraphActivity.this, dataPoint.toString(), Toast.LENGTH_SHORT).show();
+                double time = dataPoint.getX();
+                double voltage = dataPoint.getY();
+
+                Toast.makeText(GraphActivity.this, String.format("%.3f ms   -->   %.3f V", time, voltage), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -62,9 +97,7 @@ public class GraphActivity extends AppCompatActivity {
         receiver = new BtReceiverThread(uiHandler);
         receiver.start();
 
-        graphData = new DataPoint[POINTS_COUNT];
-
-        Toast.makeText(GraphActivity.this, "Sincronizando...", Toast.LENGTH_SHORT).show();
+        //graphData = new DataPoint[POINTS_COUNT];
     }
 
     Handler uiHandler = new Handler(){
@@ -99,4 +132,68 @@ public class GraphActivity extends AppCompatActivity {
         super.onDestroy();
         receiver.close();
     }
+
+    private CompoundButton.OnCheckedChangeListener pauseListener = new CompoundButton.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            paused = isChecked;
+        }
+    };
+
+
+    private AdapterView.OnItemSelectedListener timeSpinnerListener = new AdapterView.OnItemSelectedListener() {
+        @Override
+        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            String selected = (String) voltageSpinner.getItemAtPosition(position);
+            switch (selected){
+                case "20 ms":
+                    takeSampleEvery = 1;
+                    break;
+                case "40 ms":
+                    takeSampleEvery = 2;
+                    break;
+                case "80 ms":
+                    takeSampleEvery = 4;
+                    break;
+                case "160 ms":
+                    takeSampleEvery = 8;
+                    break;
+                case "320 ms":
+                    takeSampleEvery = 16;
+                    break;
+            }
+        }
+
+        @Override
+        public void onNothingSelected(AdapterView<?> parent) {
+
+        }
+    };
+
+    //Configurar de acordo com circuito de condicionamento do sinal (atenuação/amplificação)
+    private AdapterView.OnItemSelectedListener voltageSpinnerListener = new AdapterView.OnItemSelectedListener() {
+        @Override
+        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            float factor = 1;
+            String selected = (String) voltageSpinner.getItemAtPosition(position);
+            switch (selected){
+                case "1 V":
+                    factor = (float)(1.0/5.0);
+                    break;
+                case "5 V":
+                    factor = 1;
+                    break;
+                case "20 V":
+                    factor = 4;
+                    break;
+            }
+
+            voltageScale = VOLTAGE_SCALE*factor;
+        }
+
+        @Override
+        public void onNothingSelected(AdapterView<?> parent) {
+
+        }
+    };
 }

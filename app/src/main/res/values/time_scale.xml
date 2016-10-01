@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="time_array">
+        <item>20 ms</item>
+        <item>40 ms</item>
+        <item>80 ms</item>
+        <item>160 ms</item>
+        <item>320 ms</item>
+    </string-array>
+</resources>

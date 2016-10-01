@@ -14,10 +14,6 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Created by rhuan on 2016-09-05.
  */
 public class ParserThread extends Thread {
-    private final float TIME_SCALE = (float) 0.120;          //120us a cada ponto -> 0.12ms
-    private final float VOLTAGE_SCALE = (float) 0.00488;     //4.88mV
-    private final int SCREEN_REFRESH_INTERVAL = 80;          //intervalo entre cada atualização da tela (ms)
-
     LinkedBlockingQueue<Byte> fila;
     Buffer buffer;
     ArrayList<Float> graphBuffer;
@@ -54,26 +50,28 @@ public class ParserThread extends Thread {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                graphBuffer = GraphBuffer.getInstance();
-                if(graphBuffer.size() == GraphActivity.POINTS_COUNT) {  //só atualiza gui quando tiver os primeiros 1000 pontos
-                    //converte para DataPoint[] calculando escala de tensão e tempo
-                    int i = 0;
-                    graphData = new DataPoint[GraphActivity.POINTS_COUNT];
+                if(!GraphActivity.paused) {
+                    graphBuffer = GraphBuffer.getInstance();
+                    if (graphBuffer.size() == GraphActivity.POINTS_COUNT) {  //só atualiza gui quando tiver os primeiros 1000 pontos
+                        //converte para DataPoint[] calculando escala de tensão e tempo
+                        int i = 0;
+                        graphData = new DataPoint[GraphActivity.POINTS_COUNT];
 
-                    for (Float p : graphBuffer) {
-                        graphData[i] = new DataPoint(i * TIME_SCALE, p * VOLTAGE_SCALE);
-                        i++;
+                        for (Float p : graphBuffer) {
+                            graphData[i] = new DataPoint(i * GraphActivity.TIME_SCALE, p * GraphActivity.voltageScale);
+                            i++;
+                        }
+
+                        //envia ponto para grafico (atualiza GUI)
+                        Message m = new Message();
+                        m.arg1 = GraphActivity.SET_CH0_DATA;     //substitui dados do canal 0
+                        m.obj = graphData;                       //pontos
+                        uiHandler.sendMessage(m);
                     }
-
-                    //envia ponto para grafico (atualiza GUI)
-                    Message m = new Message();
-                    m.arg1 = GraphActivity.SET_CH0_DATA;     //substitui dados do canal 0
-                    m.obj = graphData;                       //pontos
-                    uiHandler.sendMessage(m);
                 }
             }
         };
-        t.scheduleAtFixedRate(task, SCREEN_REFRESH_INTERVAL, SCREEN_REFRESH_INTERVAL);
+        t.scheduleAtFixedRate(task, GraphActivity.SCREEN_REFRESH_INTERVAL, GraphActivity.SCREEN_REFRESH_INTERVAL);
 
 
         //Lê fila separando cada conjunto de pontos
@@ -129,7 +127,7 @@ public class ParserThread extends Thread {
         if(buffer.getPontos().size() > 0) {
             for (Float p : buffer.getPontos()) {
                 if (p != null) {
-                    graphData[i] = new DataPoint(tempo * TIME_SCALE, p * VOLTAGE_SCALE);
+                    graphData[i] = new DataPoint(tempo * GraphActivity.TIME_SCALE, p * GraphActivity.voltageScale);
                     i++;
                 }
                 tempo++;    //se valor null compensa ponto não recebido "esticando" grafico
