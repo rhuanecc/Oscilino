@@ -45,9 +45,6 @@ public class GraphActivity extends AppCompatActivity {
     LineGraphSeries<DataPoint> ch1;
     BtReceiverThread receiver;
 
-    //DataPoint[] graphData;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,11 +69,11 @@ public class GraphActivity extends AppCompatActivity {
         //========================================= Grafico =========================================
         graph = (GraphView) findViewById(R.id.graph);
         graph.setTitle("Voltage x Time (ms)");
-        //graph.setHorizontalScrollBarEnabled(true);
         graph.setKeepScreenOn(true);
         graph.getViewport().setXAxisBoundsManual(true);
         graph.getViewport().setMinX(0);
         graph.getViewport().setMaxX(80);
+        graph.getViewport().setScalable(true);                      //enable zoom
         graph.getGridLabelRenderer().setNumHorizontalLabels(9);
         graph.getGridLabelRenderer().setNumVerticalLabels(5);
 
@@ -109,10 +106,10 @@ public class GraphActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             if(msg.arg1 == SET_CH0_DATA){                          //canal 0
-                ch0.resetData((DataPoint[])msg.obj);        //recebe pontos mais recentes
+                ch0.resetData((DataPoint[])msg.obj);
 
             } else if(msg.arg1 == SET_CH1_DATA) {                   //canal 1
-                ch1.resetData((DataPoint[]) msg.obj);        //recebe pontos mais recentes
+                ch1.resetData((DataPoint[]) msg.obj);
             }
         }
     };
@@ -187,7 +184,6 @@ public class GraphActivity extends AppCompatActivity {
                     graphPointsNumber = 700;
                     break;
             }
-            //graph.getGridLabelRenderer().setNumHorizontalLabels(9);
         }
 
         @Override
