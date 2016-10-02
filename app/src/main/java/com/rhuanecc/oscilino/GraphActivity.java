@@ -27,13 +27,13 @@ import java.util.ArrayList;
 public class GraphActivity extends AppCompatActivity {
     public static final int SET_CH0_DATA = 0;
     public static final int SET_CH1_DATA = 1;
-    public static final int POINTS_COUNT = 700;
     public static final float TIME_SCALE = (float) 0.120;          //120us a cada ponto -> 0.12ms
     public static final float VOLTAGE_SCALE = (float) 0.00488;     //4.88mV
     public static final int SCREEN_REFRESH_INTERVAL = 100;         //intervalo entre cada atualização da tela (ms)
 
     public static boolean paused = false;
-    public static float takeSampleEvery = 1;            //quantidade de amostras a serem ignoradas para aumentar escala de tempo
+    public static int graphPointsNumber = 700;          //quantidade de pontos no gráfico, reduzir para reduzir escala de tempo
+    public static int takeSampleEvery = 1;              //quantidade de amostras a serem ignoradas para aumentar escala de tempo
     public static float voltageScale = VOLTAGE_SCALE;   //escala de tensão utilizada no circuito de condicionamento
 
     ToggleButton pauseButton;
@@ -61,7 +61,7 @@ public class GraphActivity extends AppCompatActivity {
         ArrayAdapter<CharSequence> timeAdapter = ArrayAdapter.createFromResource(this, R.array.time_array, android.R.layout.simple_spinner_dropdown_item);
         timeSpinner.setAdapter(timeAdapter);
         timeSpinner.setOnItemSelectedListener(timeSpinnerListener);
-        timeSpinner.setSelection(1);        //20ms
+        timeSpinner.setSelection(2);        //80ms
 
         voltageSpinner = (Spinner) findViewById(R.id.voltageSpinner);
         ArrayAdapter<CharSequence> voltageAdapter = ArrayAdapter.createFromResource(this, R.array.voltage_array, android.R.layout.simple_spinner_dropdown_item);
@@ -74,6 +74,11 @@ public class GraphActivity extends AppCompatActivity {
         graph.setTitle("Voltage x Time (ms)");
         //graph.setHorizontalScrollBarEnabled(true);
         graph.setKeepScreenOn(true);
+        graph.getViewport().setXAxisBoundsManual(true);
+        graph.getViewport().setMinX(0);
+        graph.getViewport().setMaxX(80);
+        graph.getGridLabelRenderer().setNumHorizontalLabels(9);
+        graph.getGridLabelRenderer().setNumVerticalLabels(5);
 
         //Dados para grafico
         ch0 = new LineGraphSeries<>();
@@ -97,17 +102,17 @@ public class GraphActivity extends AppCompatActivity {
         receiver = new BtReceiverThread(uiHandler);
         receiver.start();
 
-        //graphData = new DataPoint[POINTS_COUNT];
+        //graphData = new DataPoint[graphPointsNumber];
     }
 
     Handler uiHandler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
             if(msg.arg1 == SET_CH0_DATA){                          //canal 0
-                ch0.resetData((DataPoint[])msg.obj);        //recebe 1000 pontos mais recentes
+                ch0.resetData((DataPoint[])msg.obj);        //recebe pontos mais recentes
 
             } else if(msg.arg1 == SET_CH1_DATA) {                   //canal 1
-                ch1.resetData((DataPoint[]) msg.obj);        //recebe 1000 pontos mais recentes
+                ch1.resetData((DataPoint[]) msg.obj);        //recebe pontos mais recentes
             }
         }
     };
@@ -144,24 +149,45 @@ public class GraphActivity extends AppCompatActivity {
     private AdapterView.OnItemSelectedListener timeSpinnerListener = new AdapterView.OnItemSelectedListener() {
         @Override
         public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-            String selected = (String) voltageSpinner.getItemAtPosition(position);
+            String selected = (String) timeSpinner.getItemAtPosition(position);
             switch (selected){
                 case "20 ms":
                     takeSampleEvery = 1;
+                    graph.getViewport().setMaxX(20);
+                    graphPointsNumber = 175;
                     break;
                 case "40 ms":
-                    takeSampleEvery = 2;
+                    takeSampleEvery = 1;
+                    graph.getViewport().setMaxX(40);
+                    graphPointsNumber = 350;
                     break;
                 case "80 ms":
-                    takeSampleEvery = 4;
+                    takeSampleEvery = 1;
+                    graph.getViewport().setMaxX(80);
+                    graphPointsNumber = 700;
                     break;
                 case "160 ms":
-                    takeSampleEvery = 8;
+                    takeSampleEvery = 2;
+                    graph.getViewport().setMaxX(160);
+                    graphPointsNumber = 700;
                     break;
                 case "320 ms":
+                    takeSampleEvery = 4;
+                    graph.getViewport().setMaxX(320);
+                    graphPointsNumber = 700;
+                    break;
+                case "640 ms":
+                    takeSampleEvery = 8;
+                    graph.getViewport().setMaxX(640);
+                    graphPointsNumber = 700;
+                    break;
+                case "1280 ms":
                     takeSampleEvery = 16;
+                    graph.getViewport().setMaxX(1280);
+                    graphPointsNumber = 700;
                     break;
             }
+            //graph.getGridLabelRenderer().setNumHorizontalLabels(9);
         }
 
         @Override

@@ -14,7 +14,8 @@ public class GraphBuffer {
     }
 
     public static synchronized void add(Float p) {
-        if (graphBuffer.size() >= GraphActivity.POINTS_COUNT)   //limita em 1000 pontos retirando mais antigo
+        int size = GraphActivity.graphPointsNumber *GraphActivity.takeSampleEvery;    //tamanho do buffer de acordo com escala de tempo
+        while (graphBuffer.size() >= size)   //remove pontos mais antigos
             graphBuffer.remove(0);
         graphBuffer.add(p);
     }

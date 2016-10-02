@@ -46,21 +46,29 @@ public class ParserThread extends Thread {
         }
 
         //deve ocorrer a cada SCREEN_REFRESH_INTERVAL ms
+        //converte para DataPoint[] calculando escala de tensão e tempo
         Timer t = new Timer("TimerThread");
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
                 if(!GraphActivity.paused) {
                     graphBuffer = GraphBuffer.getInstance();
-                    if (graphBuffer.size() == GraphActivity.POINTS_COUNT) {  //só atualiza gui quando tiver os primeiros 1000 pontos
-                        //converte para DataPoint[] calculando escala de tensão e tempo
-                        int i = 0;
-                        graphData = new DataPoint[GraphActivity.POINTS_COUNT];
+                    if (graphBuffer.size() == GraphActivity.graphPointsNumber *GraphActivity.takeSampleEvery) {  //só atualiza gui quando tiver tela completa
 
+                        graphData = new DataPoint[GraphActivity.graphPointsNumber];
+
+                        int j=0;
+                        int size = GraphActivity.graphPointsNumber *GraphActivity.takeSampleEvery;    //tamanho do buffer de acordo com escala de tempo
+                        for(int i=0; i<size; i+=GraphActivity.takeSampleEvery) {
+                            graphData[j] = new DataPoint(i * GraphActivity.TIME_SCALE, graphBuffer.get(i) * GraphActivity.voltageScale);
+                            j++;
+                        }
+
+                        /*int i = 0;
                         for (Float p : graphBuffer) {
                             graphData[i] = new DataPoint(i * GraphActivity.TIME_SCALE, p * GraphActivity.voltageScale);
                             i++;
-                        }
+                        }*/
 
                         //envia ponto para grafico (atualiza GUI)
                         Message m = new Message();
@@ -111,18 +119,18 @@ public class ParserThread extends Thread {
         }
     }
 
-    /**Adiciona pontos do buffer de recebimento ao buffer do grafico limitando em POINTS_COUNT mais recentes*/
+    /**Adiciona pontos do buffer de recebimento ao buffer do grafico limitando em graphPointsNumber mais recentes*/
     private void addPontosGraphBuffer(){
         for(Float p : buffer.getPontos()) {
             GraphBuffer.add(p);
         }
     }
 
-    /** Envia buffer completo recebido. Deve receber protocolo com POINTS_COUNT pontos do Arduino.*/
+    /** Envia buffer completo recebido. Deve receber protocolo com graphPointsNumber pontos do Arduino.*/
     private void enviaBufferCompleto(){
         int i = 0;
         int tempo = 0;
-        graphData = new DataPoint[GraphActivity.POINTS_COUNT];
+        graphData = new DataPoint[GraphActivity.graphPointsNumber];
 
         if(buffer.getPontos().size() > 0) {
             for (Float p : buffer.getPontos()) {
