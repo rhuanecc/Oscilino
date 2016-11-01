@@ -27,7 +27,7 @@ import java.util.ArrayList;
 public class GraphActivity extends AppCompatActivity {
     public static final int SET_CH0_DATA = 0;
     public static final int SET_CH1_DATA = 1;
-    public static final float TIME_SCALE = (float) 0.120;          //120us a cada ponto -> 0.12ms
+    public static final float TIME_SCALE = (float) 0.112;          //112us a cada ponto -> 0.112ms
     public static final float VOLTAGE_SCALE = (float) 0.00488;     //4.88mV
     public static final int SCREEN_REFRESH_INTERVAL = 100;         //intervalo entre cada atualização da tela (ms)
 
@@ -58,7 +58,7 @@ public class GraphActivity extends AppCompatActivity {
         ArrayAdapter<CharSequence> timeAdapter = ArrayAdapter.createFromResource(this, R.array.time_array, android.R.layout.simple_spinner_dropdown_item);
         timeSpinner.setAdapter(timeAdapter);
         timeSpinner.setOnItemSelectedListener(timeSpinnerListener);
-        timeSpinner.setSelection(2);        //80ms
+        timeSpinner.setSelection(0);        //80ms
 
         voltageSpinner = (Spinner) findViewById(R.id.voltageSpinner);
         ArrayAdapter<CharSequence> voltageAdapter = ArrayAdapter.createFromResource(this, R.array.voltage_array, android.R.layout.simple_spinner_dropdown_item);

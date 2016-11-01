@@ -40,8 +40,8 @@ public class BtConnectThread extends Thread {
 
         try {
             mmSocket.connect();
-            Log.e("BT", "BT Conectado");
-            BtSocket.setSocket(mmSocket);
+            Log.e("BT", "BT Connected");
+            BtSocket.setSocket(mmSocket);   //set socket on static attribute
             Message m = new Message();
             m.arg1 = 1;
             mmHandler.sendMessage(m);

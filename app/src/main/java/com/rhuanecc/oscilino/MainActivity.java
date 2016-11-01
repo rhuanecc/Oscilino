@@ -57,8 +57,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
-        btnBT.performClick();
     }
 
     @Override
@@ -96,11 +94,9 @@ public class MainActivity extends AppCompatActivity {
     Handler socketHandler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
-            //Log.e("sockHandler", "recebeu msg: "+msg.arg1);
             if(msg.arg1 == 0 || BtSocket.getSocket() ==  null){
                 Toast.makeText(getApplicationContext(), "Falha ao conectar bluetooth", Toast.LENGTH_LONG).show();
             }else{   //Se conectado com sucesso
-                //Toast.makeText(getApplicationContext(), "Bluetooth conectado", Toast.LENGTH_SHORT).show();
                 //Abre activity do grafico passando socket
                 Intent i = new Intent(MainActivity.this, GraphActivity.class);
                 startActivity(i);

@@ -2,6 +2,7 @@ package com.rhuanecc.oscilino;
 
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import com.jjoe64.graphview.series.DataPoint;
 
@@ -64,12 +65,6 @@ public class ParserThread extends Thread {
                             j++;
                         }
 
-                        /*int i = 0;
-                        for (Float p : graphBuffer) {
-                            graphData[i] = new DataPoint(i * GraphActivity.TIME_SCALE, p * GraphActivity.voltageScale);
-                            i++;
-                        }*/
-
                         //envia ponto para grafico (atualiza GUI)
                         Message m = new Message();
                         m.arg1 = GraphActivity.SET_CH0_DATA;     //substitui dados do canal 0
@@ -115,7 +110,9 @@ public class ParserThread extends Thread {
         if(buffer.isValid()){
             addPontosGraphBuffer();
             //TimerTask irá enviar graphBuffer para GUI a cada SCREEN_REFRESH_INTERVAL
-
+        }
+        else{
+            Log.e("CHECKSUM","Buffer descartado");
         }
     }
 
