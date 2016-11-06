@@ -1,5 +1,7 @@
 package com.rhuanecc.oscilino;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 
 /**
@@ -8,7 +10,7 @@ import java.util.ArrayList;
 
 public class Buffer {
     private Byte ch;
-    private ArrayList<Float> pontos;
+    private ArrayList<Integer> pontos;
     private Long cks;
 
     public Buffer() {
@@ -29,31 +31,30 @@ public class Buffer {
         return ch;
     }
 
-    public ArrayList<Float> getPontos() {
+    public ArrayList<Integer> getPontos() {
         return pontos;
     }
 
     public boolean isValid(){
-        if(ch == null || cks == null) //se nao recebeu desde o começo
+        if(ch == null || cks == null) { //se nao recebeu desde o começo
+            Log.e("CKS", " cks="+cks);
             return false;
+        }
 
         long soma = 0;
-        for(Float p : pontos)
+        for(Integer p : pontos)
             soma+=p;
 
         if(soma == cks.longValue()) //se checksum bater
             return true;
-        else
+        else {
+            Log.e("CKS", cks.toString()+" = "+soma);
             return false;
+        }
     }
 
-    public void add(Float value){
+    public void add(Integer value){
         pontos.add(value);
-    }
-
-    public void setScale(float step){
-        for(Float p : pontos)
-            p = p*step;
     }
 
     @Override
@@ -65,7 +66,7 @@ public class Buffer {
         else
             s = s.concat("ch=null;");
 
-        for(Float p : pontos){
+        for(Integer p : pontos){
             s = s.concat(p.toString()+",");
         }
 

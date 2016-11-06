@@ -17,21 +17,20 @@
         android:layout_marginLeft="10dp" />
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="0dp"
         android:layout_margin="0dp"
         android:id="@+id/controlsLayout"
-        android:layout_weight="0">
+        android:layout_weight="0"
+        android:gravity="center_horizontal">
 
         <ToggleButton
             android:text="ToggleButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/pauseButton"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentStart="true"
             android:textOn="Pause"
             android:textOff="Pause" />
 
@@ -64,6 +63,14 @@
             android:layout_weight="1"
             android:layout_width="wrap_content"
             android:id="@+id/voltageSpinner" />
+
+        <ToggleButton
+            android:text="AC"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/toggleButton"
+            android:textOff="AC"
+            android:textOn="AC" />
 
     </LinearLayout>
 

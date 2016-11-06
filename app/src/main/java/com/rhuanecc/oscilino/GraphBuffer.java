@@ -7,14 +7,14 @@ import java.util.ArrayList;
  */
 
 public class GraphBuffer {
-    private static ArrayList<Float> graphBuffer = new ArrayList<>();
+    private static ArrayList<Integer> graphBuffer = new ArrayList<>();
 
-    public static synchronized ArrayList<Float> getInstance() {
-        return (ArrayList<Float>) graphBuffer.clone();          //retorna copia atual do array
+    public static synchronized ArrayList<Integer> getInstance() {
+        return (ArrayList<Integer>) graphBuffer.clone();          //retorna copia atual do array
     }
 
-    public static synchronized void add(Float p) {
-        int size = GraphActivity.graphPointsNumber *GraphActivity.takeSampleEvery;    //tamanho do buffer de acordo com escala de tempo
+    public static synchronized void add(Integer p) {
+        int size = GraphActivity.graphPointsNumber * GraphActivity.takeSampleEvery;    //tamanho do buffer de acordo com escala de tempo
         while (graphBuffer.size() >= size)   //remove pontos mais antigos
             graphBuffer.remove(0);
         graphBuffer.add(p);

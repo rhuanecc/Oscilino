@@ -28,13 +28,14 @@ public class GraphActivity extends AppCompatActivity {
     public static final int SET_CH0_DATA = 0;
     public static final int SET_CH1_DATA = 1;
     public static final float TIME_SCALE = (float) 0.112;          //112us a cada ponto -> 0.112ms
-    public static final float VOLTAGE_SCALE = (float) 0.00488;     //4.88mV
+    public static final float VOLTAGE_SCALE = (float) 0.0048875;     //4.88mV
     public static final int SCREEN_REFRESH_INTERVAL = 100;         //intervalo entre cada atualização da tela (ms)
+    public static final int MAX_GRAPH_POINTS = 700;
 
     public static boolean paused = false;
-    public static int graphPointsNumber = 700;          //quantidade de pontos no gráfico, reduzir para reduzir escala de tempo
-    public static int takeSampleEvery = 1;              //quantidade de amostras a serem ignoradas para aumentar escala de tempo
-    public static float voltageScale = VOLTAGE_SCALE;   //escala de tensão utilizada no circuito de condicionamento
+    public static int graphPointsNumber = MAX_GRAPH_POINTS;     //quantidade de pontos no gráfico, reduzir para reduzir escala de tempo
+    public static int takeSampleEvery = 1;                      //quantidade de amostras a serem ignoradas para aumentar escala de tempo
+    public static float voltageScale = VOLTAGE_SCALE;           //escala de tensão utilizada no circuito de condicionamento
 
     ToggleButton pauseButton;
     Spinner timeSpinner;
@@ -50,7 +51,7 @@ public class GraphActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_graph);
 
-        //======================================== Controles ========================================
+        //======================================== Controls ========================================
         pauseButton = (ToggleButton) findViewById(R.id.pauseButton);
         pauseButton.setOnCheckedChangeListener(pauseListener);
 
@@ -58,7 +59,7 @@ public class GraphActivity extends AppCompatActivity {
         ArrayAdapter<CharSequence> timeAdapter = ArrayAdapter.createFromResource(this, R.array.time_array, android.R.layout.simple_spinner_dropdown_item);
         timeSpinner.setAdapter(timeAdapter);
         timeSpinner.setOnItemSelectedListener(timeSpinnerListener);
-        timeSpinner.setSelection(0);        //80ms
+        timeSpinner.setSelection(2);        //80ms
 
         voltageSpinner = (Spinner) findViewById(R.id.voltageSpinner);
         ArrayAdapter<CharSequence> voltageAdapter = ArrayAdapter.createFromResource(this, R.array.voltage_array, android.R.layout.simple_spinner_dropdown_item);
@@ -66,16 +67,15 @@ public class GraphActivity extends AppCompatActivity {
         voltageSpinner.setOnItemSelectedListener(voltageSpinnerListener);
         voltageSpinner.setSelection(1);     //5v
 
-        //========================================= Grafico =========================================
+        //========================================= Graph ==========================================
         graph = (GraphView) findViewById(R.id.graph);
         graph.setTitle("Voltage x Time (ms)");
         graph.setKeepScreenOn(true);
+        graph.getViewport().setYAxisBoundsManual(true);
         graph.getViewport().setXAxisBoundsManual(true);
-        graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(80);
         graph.getViewport().setScalable(true);                      //enable zoom
         graph.getGridLabelRenderer().setNumHorizontalLabels(9);
-        graph.getGridLabelRenderer().setNumVerticalLabels(5);
+        graph.getGridLabelRenderer().setNumVerticalLabels(6);
 
         //Dados para grafico
         ch0 = new LineGraphSeries<>();
@@ -98,8 +98,6 @@ public class GraphActivity extends AppCompatActivity {
         //Inicia nova thread para receber os dados
         receiver = new BtReceiverThread(uiHandler);
         receiver.start();
-
-        //graphData = new DataPoint[graphPointsNumber];
     }
 
     Handler uiHandler = new Handler(){
@@ -108,13 +106,13 @@ public class GraphActivity extends AppCompatActivity {
             if(msg.arg1 == SET_CH0_DATA){                          //canal 0
                 ch0.resetData((DataPoint[])msg.obj);
 
-            } else if(msg.arg1 == SET_CH1_DATA) {                   //canal 1
+            } else if(msg.arg1 == SET_CH1_DATA) {                  //canal 1
                 ch1.resetData((DataPoint[]) msg.obj);
             }
         }
     };
 
-    //Tela cheia
+    //Full screen - immersive mode
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
@@ -151,45 +149,43 @@ public class GraphActivity extends AppCompatActivity {
                 case "20 ms":
                     takeSampleEvery = 1;
                     graph.getViewport().setMaxX(20);
-                    graphPointsNumber = 175;
+                    graphPointsNumber = MAX_GRAPH_POINTS/4;
                     break;
                 case "40 ms":
                     takeSampleEvery = 1;
                     graph.getViewport().setMaxX(40);
-                    graphPointsNumber = 350;
+                    graphPointsNumber = MAX_GRAPH_POINTS/2;
                     break;
                 case "80 ms":
                     takeSampleEvery = 1;
                     graph.getViewport().setMaxX(80);
-                    graphPointsNumber = 700;
+                    graphPointsNumber = MAX_GRAPH_POINTS;
                     break;
                 case "160 ms":
                     takeSampleEvery = 2;
                     graph.getViewport().setMaxX(160);
-                    graphPointsNumber = 700;
+                    graphPointsNumber = MAX_GRAPH_POINTS;
                     break;
                 case "320 ms":
                     takeSampleEvery = 4;
                     graph.getViewport().setMaxX(320);
-                    graphPointsNumber = 700;
+                    graphPointsNumber = MAX_GRAPH_POINTS;
                     break;
                 case "640 ms":
                     takeSampleEvery = 8;
                     graph.getViewport().setMaxX(640);
-                    graphPointsNumber = 700;
+                    graphPointsNumber = MAX_GRAPH_POINTS;
                     break;
                 case "1280 ms":
                     takeSampleEvery = 16;
                     graph.getViewport().setMaxX(1280);
-                    graphPointsNumber = 700;
+                    graphPointsNumber = MAX_GRAPH_POINTS;
                     break;
             }
         }
 
         @Override
-        public void onNothingSelected(AdapterView<?> parent) {
-
-        }
+        public void onNothingSelected(AdapterView<?> parent) {}
     };
 
     //Configurar de acordo com circuito de condicionamento do sinal (atenuação/amplificação)
@@ -199,14 +195,18 @@ public class GraphActivity extends AppCompatActivity {
             float factor = 1;
             String selected = (String) voltageSpinner.getItemAtPosition(position);
             switch (selected){
-                case "1 V":
+                case "1 V (5x)":
                     factor = (float)(1.0/5.0);
+                    graph.getViewport().setMaxY(1.0);
                     break;
-                case "5 V":
+                case "5 V (1/1)":
                     factor = 1;
+                    graph.getViewport().setMaxY(5.0);
                     break;
-                case "20 V":
+                case "20 V (1/4)":
                     factor = 4;
+                    graph.getViewport().setMaxY(20.0);
+                    graph.getGridLabelRenderer().setNumVerticalLabels(6);
                     break;
             }
 
@@ -214,8 +214,6 @@ public class GraphActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onNothingSelected(AdapterView<?> parent) {
-
-        }
+        public void onNothingSelected(AdapterView<?> parent) {}
     };
 }

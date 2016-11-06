@@ -12,15 +12,24 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+
+        <activity android:name=".MainActivity"
+            android:screenOrientation="reverseLandscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".GraphActivity" android:screenOrientation="reverseLandscape"/>
-        <activity android:name=".BT.DevicesList" android:label="Dispositivos Pareados" android:theme="@android:style/Theme.Dialog"/>
+
+        <activity
+            android:name=".GraphActivity"
+            android:screenOrientation="reverseLandscape"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity
+            android:name=".BT.DevicesList"
+            android:label="Dispositivos Pareados"
+            android:theme="@android:style/Theme.Dialog" />
     </application>
 
 </manifest>

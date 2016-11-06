@@ -2,7 +2,7 @@
 <resources>
     <string-array name="voltage_array">
         <item>1 V (5x)</item>
-        <item>5 V (1:1)</item>
-        <item>20 V (1:4)</item>
+        <item>5 V (1/1)</item>
+        <item>20 V (1/4)</item>
     </string-array>
 </resources>

@@ -12,6 +12,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.SeekBar;
+import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.rhuanecc.oscilino.BT.BtConnectThread;
@@ -22,7 +25,12 @@ public class MainActivity extends AppCompatActivity {
     private static final int SOLICITA_BT = 1;
     private static final int SOLICICTA_CONEXAO = 2;
 
+    int graphSamples;
+
     Button btnBT;
+    Switch screenOnSwitch;
+    SeekBar seekBar;
+    TextView seekBarLabel;
 
     BluetoothAdapter btAdapter;
     BluetoothDevice btDevice;
@@ -35,6 +43,30 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         btnBT = (Button) findViewById(R.id.btnBT);
+        screenOnSwitch = (Switch) findViewById(R.id.switch1);
+        seekBar = (SeekBar) findViewById(R.id.seekBar);
+        seekBarLabel = (TextView) findViewById(R.id.seekBarLabel);
+
+        graphSamples = 50 + 50*seekBar.getProgress();
+        seekBarLabel.setText(String.valueOf(graphSamples));
+
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                graphSamples = 50 + 50*progress;
+                seekBarLabel.setText(String.valueOf(graphSamples));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
 
         //botao bluetooth
         btnBT.setOnClickListener(new View.OnClickListener() {

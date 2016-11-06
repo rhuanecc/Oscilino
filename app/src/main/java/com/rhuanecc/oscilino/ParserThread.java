@@ -17,7 +17,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class ParserThread extends Thread {
     LinkedBlockingQueue<Byte> fila;
     Buffer buffer;
-    ArrayList<Float> graphBuffer;
+    ArrayList<Integer> graphBuffer;
     DataPoint[] graphData;
     Handler uiHandler;
     byte temp;
@@ -59,9 +59,9 @@ public class ParserThread extends Thread {
                         graphData = new DataPoint[GraphActivity.graphPointsNumber];
 
                         int j=0;
-                        int size = GraphActivity.graphPointsNumber *GraphActivity.takeSampleEvery;    //tamanho do buffer de acordo com escala de tempo
+                        int size = GraphActivity.graphPointsNumber * GraphActivity.takeSampleEvery;    //tamanho do buffer de acordo com escala de tempo
                         for(int i=0; i<size; i+=GraphActivity.takeSampleEvery) {
-                            graphData[j] = new DataPoint(i * GraphActivity.TIME_SCALE, graphBuffer.get(i) * GraphActivity.voltageScale);
+                            graphData[j] = new DataPoint(i * GraphActivity.TIME_SCALE, (float)graphBuffer.get(i) * GraphActivity.voltageScale);
                             j++;
                         }
 
@@ -99,7 +99,7 @@ public class ParserThread extends Thread {
                 }else{                        //une 2 bytes em um int
                     tempInt = ((temp&0xFF) << 8);      //recebe 8 bits mais significativos
                     tempInt += (fila.take()&0xFF);     //soma aos 8 bits menos significativos
-                    buffer.add((float)tempInt);     //converte para escala do ADC e add no buffer
+                    buffer.add(tempInt);     //converte para escala do ADC e add no buffer
                 }
             } catch (InterruptedException e) {}
         }
@@ -112,13 +112,13 @@ public class ParserThread extends Thread {
             //TimerTask irá enviar graphBuffer para GUI a cada SCREEN_REFRESH_INTERVAL
         }
         else{
-            Log.e("CHECKSUM","Buffer descartado");
+            //Log.e("CHECKSUM","Buffer descartado");
         }
     }
 
     /**Adiciona pontos do buffer de recebimento ao buffer do grafico limitando em graphPointsNumber mais recentes*/
     private void addPontosGraphBuffer(){
-        for(Float p : buffer.getPontos()) {
+        for(Integer p : buffer.getPontos()) {
             GraphBuffer.add(p);
         }
     }
@@ -130,9 +130,9 @@ public class ParserThread extends Thread {
         graphData = new DataPoint[GraphActivity.graphPointsNumber];
 
         if(buffer.getPontos().size() > 0) {
-            for (Float p : buffer.getPontos()) {
+            for (Integer p : buffer.getPontos()) {
                 if (p != null) {
-                    graphData[i] = new DataPoint(tempo * GraphActivity.TIME_SCALE, p * GraphActivity.voltageScale);
+                    graphData[i] = new DataPoint(tempo * GraphActivity.TIME_SCALE, (float)p * GraphActivity.voltageScale);
                     i++;
                 }
                 tempo++;    //se valor null compensa ponto não recebido "esticando" grafico
