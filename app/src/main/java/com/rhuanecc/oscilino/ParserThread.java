@@ -60,9 +60,16 @@ public class ParserThread extends Thread {
 
                         int j=0;
                         int size = GraphActivity.graphPointsNumber * GraphActivity.takeSampleEvery;    //tamanho do buffer de acordo com escala de tempo
-                        for(int i=0; i<size; i+=GraphActivity.takeSampleEvery) {
-                            graphData[j] = new DataPoint(i * GraphActivity.TIME_SCALE, (float)graphBuffer.get(i) * GraphActivity.voltageScale);
-                            j++;
+                        if(GraphActivity.isAC) {
+                            for (int i = 0; i < size; i += GraphActivity.takeSampleEvery) {
+                                graphData[j] = new DataPoint(i * GraphActivity.TIME_SCALE,  ((float)graphBuffer.get(i) - 511.5) * GraphActivity.voltageScale);
+                                j++;
+                            }
+                        } else{
+                            for (int i = 0; i < size; i += GraphActivity.takeSampleEvery) {
+                                graphData[j] = new DataPoint(i * GraphActivity.TIME_SCALE, (float) graphBuffer.get(i) * GraphActivity.voltageScale);
+                                j++;
+                            }
                         }
 
                         //envia ponto para grafico (atualiza GUI)

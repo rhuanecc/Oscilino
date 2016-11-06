@@ -36,8 +36,10 @@ public class GraphActivity extends AppCompatActivity {
     public static int graphPointsNumber = MAX_GRAPH_POINTS;     //quantidade de pontos no gráfico, reduzir para reduzir escala de tempo
     public static int takeSampleEvery = 1;                      //quantidade de amostras a serem ignoradas para aumentar escala de tempo
     public static float voltageScale = VOLTAGE_SCALE;           //escala de tensão utilizada no circuito de condicionamento
+    public static boolean isAC = false;
 
     ToggleButton pauseButton;
+    ToggleButton acButton;
     Spinner timeSpinner;
     Spinner voltageSpinner;
 
@@ -54,6 +56,9 @@ public class GraphActivity extends AppCompatActivity {
         //======================================== Controls ========================================
         pauseButton = (ToggleButton) findViewById(R.id.pauseButton);
         pauseButton.setOnCheckedChangeListener(pauseListener);
+
+        acButton = (ToggleButton) findViewById(R.id.acButton);
+        acButton.setOnCheckedChangeListener(acListener);
 
         timeSpinner = (Spinner) findViewById(R.id.timeSpinner);
         ArrayAdapter<CharSequence> timeAdapter = ArrayAdapter.createFromResource(this, R.array.time_array, android.R.layout.simple_spinner_dropdown_item);
@@ -140,6 +145,19 @@ public class GraphActivity extends AppCompatActivity {
         }
     };
 
+    private CompoundButton.OnCheckedChangeListener acListener = new CompoundButton.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            isAC = isChecked;
+
+            //updates using spinner listener
+            int selectedItemPosition = voltageSpinner.getSelectedItemPosition();
+            View view = voltageSpinner.getChildAt(selectedItemPosition);
+            long itemID = voltageSpinner.getAdapter().getItemId(selectedItemPosition);
+            voltageSpinnerListener.onItemSelected(voltageSpinner, view, selectedItemPosition, itemID);
+        }
+    };
+
 
     private AdapterView.OnItemSelectedListener timeSpinnerListener = new AdapterView.OnItemSelectedListener() {
         @Override
@@ -197,18 +215,39 @@ public class GraphActivity extends AppCompatActivity {
             switch (selected){
                 case "1 V (5x)":
                     factor = (float)(1.0/5.0);
-                    graph.getViewport().setMaxY(1.0);
+                    if(isAC){
+                        graph.getViewport().setMaxY(0.5);
+                        graph.getViewport().setMinY(-0.5);
+                    } else {
+                        graph.getViewport().setMaxY(1.0);
+                        graph.getViewport().setMinY(0);
+                    }
                     break;
+
                 case "5 V (1/1)":
                     factor = 1;
-                    graph.getViewport().setMaxY(5.0);
+                    if(isAC){
+                        graph.getViewport().setMaxY(2.5);
+                        graph.getViewport().setMinY(-2.5);
+                    } else {
+                        graph.getViewport().setMaxY(5.0);
+                        graph.getViewport().setMinY(0);
+                    }
                     break;
+
                 case "20 V (1/4)":
                     factor = 4;
-                    graph.getViewport().setMaxY(20.0);
-                    graph.getGridLabelRenderer().setNumVerticalLabels(6);
+                    if(isAC){
+                        graph.getViewport().setMaxY(10);
+                        graph.getViewport().setMinY(-10);
+                    } else {
+                        graph.getViewport().setMaxY(20);
+                        graph.getViewport().setMinY(0);
+                    }
                     break;
             }
+
+            graph.getGridLabelRenderer().setNumVerticalLabels(6);
 
             voltageScale = VOLTAGE_SCALE*factor;
         }

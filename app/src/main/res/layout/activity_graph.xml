@@ -68,7 +68,7 @@
             android:text="AC"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/toggleButton"
+            android:id="@+id/acButton"
             android:textOff="AC"
             android:textOn="AC" />
 
